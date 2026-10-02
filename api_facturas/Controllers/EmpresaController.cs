@@ -1,16 +1,5 @@
-// ============================================================
-// PersonaController — la capa HTTP de persona.
-//
-// CALCADO de ProductoController (allí está explicado dónde vive
-// el GET, el 422 automático y la traducción de excepciones).
-// Mismos 6 métodos, misma tabla de códigos:
-//   Body con errores de forma → 422 (Program.cs)
-//   ArgumentException         → 400
-//   NoEncontradoExcepcion     → 404
-//   PostgresException y demás      → 500  ← aquí cae la llave foránea al
-//                                      eliminar una persona que es
-//                                      cliente o vendedor (¡pruébelo!)
-// ============================================================
+// EmpresaController — la capa HTTP de empresa (v3). CALCADO del molde
+// de producto/persona: mismos 6 métodos, misma tabla de códigos.
 
 using ApiFacturas.Excepciones;
 using ApiFacturas.Modelos;
@@ -21,37 +10,24 @@ using Microsoft.AspNetCore.Mvc;
 namespace ApiFacturas.Controllers;
 
 [ApiController]
-[Route("api/persona")]
-public class PersonaController : ControllerBase
+[Route("api/empresa")]
+public class EmpresaController : ControllerBase
 {
-    private readonly IServicioPersona _servicio;
+    private readonly IServicioEmpresa _servicio;
 
-    public PersonaController(IServicioPersona servicio)
+    public EmpresaController(IServicioEmpresa servicio)
     {
         _servicio = servicio;
     }
 
-    // ------------------------------------------------------------
-    // GET /api/persona[?limite=N]  →  listar
-    // ------------------------------------------------------------
     [HttpGet]
     public async Task<IActionResult> Listar([FromQuery] int limite = 1000)
     {
         try
         {
-            var personas = await _servicio.ListarAsync(limite);
-
-            if (personas.Count == 0)
-            {
-                return NoContent();   // 204: tabla vacía no es un error
-            }
-            return Ok(new
-            {
-                tabla = "persona",
-                limite,
-                total = personas.Count,
-                datos = personas,
-            });
+            var lista = await _servicio.ListarAsync(limite);
+            if (lista.Count == 0) { return NoContent(); }
+            return Ok(new { tabla = "empresa", limite, total = lista.Count, datos = lista });
         }
         catch (ArgumentException e)
         {
@@ -63,16 +39,12 @@ public class PersonaController : ControllerBase
         }
     }
 
-    // ------------------------------------------------------------
-    // GET /api/persona/{codigo}  →  obtener una
-    // ------------------------------------------------------------
     [HttpGet("{codigo}")]
     public async Task<IActionResult> Obtener(string codigo)
     {
         try
         {
-            var persona = await _servicio.ObtenerAsync(codigo);
-            return Ok(persona);
+            return Ok(await _servicio.ObtenerAsync(codigo));
         }
         catch (ArgumentException e)
         {
@@ -80,7 +52,7 @@ public class PersonaController : ControllerBase
         }
         catch (NoEncontradoExcepcion e)
         {
-            return StatusCode(404, new { estado = 404, mensaje = "Persona no encontrada.", detalle = e.Message });
+            return StatusCode(404, new { estado = 404, mensaje = "Empresa no encontrada.", detalle = e.Message });
         }
         catch (Exception e)
         {
@@ -88,24 +60,14 @@ public class PersonaController : ControllerBase
         }
     }
 
-    // ------------------------------------------------------------
-    // POST /api/persona  →  crear (body completo, con código)
-    // ------------------------------------------------------------
     [HttpPost]
-    public async Task<IActionResult> Crear([FromBody] PersonaCrear body)
+    public async Task<IActionResult> Crear([FromBody] EmpresaCrear body)
     {
         try
         {
-            var persona = new Persona
-            {
-                Codigo = body.Codigo!,
-                Nombre = body.Nombre!,
-                Email = body.Email!,
-                Telefono = body.Telefono!,
-            };
-
-            await _servicio.CrearAsync(persona);
-            return Ok(new { estado = 200, mensaje = "Persona creada exitosamente." });
+            var entidad = new Empresa { Codigo = body.Codigo!, Nombre = body.Nombre! };
+            await _servicio.CrearAsync(entidad);
+            return Ok(new { estado = 200, mensaje = "Empresa creada exitosamente." });
         }
         catch (ConflictoExcepcion e)
         {
@@ -122,28 +84,22 @@ public class PersonaController : ControllerBase
         }
         catch (Exception e)
         {
-            // Ej.: código duplicado — la BD rechaza por llave primaria:
+            // PK duplicada o FK inexistente: la BD rechaza → 500 con detalle:
             return StatusCode(500, new { estado = 500, mensaje = "Error interno.", detalle = e.Message });
         }
     }
 
-    // ------------------------------------------------------------
-    // PUT /api/persona/{codigo}  →  reemplazo COMPLETO
-    // ------------------------------------------------------------
     [HttpPut("{codigo}")]
-    public async Task<IActionResult> Reemplazar(string codigo, [FromBody] PersonaReemplazo body)
+    public async Task<IActionResult> Reemplazar(string codigo, [FromBody] EmpresaReemplazo body)
     {
         try
         {
             var datos = new Dictionary<string, object>
             {
                 ["nombre"] = body.Nombre!,
-                ["email"] = body.Email!,
-                ["telefono"] = body.Telefono!,
             };
-
             var filas = await _servicio.ActualizarAsync(codigo, datos);
-            return Ok(new { estado = 200, mensaje = "Persona reemplazada exitosamente.", filasAfectadas = filas });
+            return Ok(new { estado = 200, mensaje = "Empresa reemplazada exitosamente.", filasAfectadas = filas });
         }
         catch (ArgumentException e)
         {
@@ -151,7 +107,7 @@ public class PersonaController : ControllerBase
         }
         catch (NoEncontradoExcepcion e)
         {
-            return StatusCode(404, new { estado = 404, mensaje = "Persona no encontrada.", detalle = e.Message });
+            return StatusCode(404, new { estado = 404, mensaje = "Empresa no encontrada.", detalle = e.Message });
         }
         catch (ConflictoExcepcion e)
         {
@@ -172,22 +128,15 @@ public class PersonaController : ControllerBase
         }
     }
 
-    // ------------------------------------------------------------
-    // PATCH /api/persona/{codigo}  →  actualización PARCIAL
-    // ------------------------------------------------------------
     [HttpPatch("{codigo}")]
-    public async Task<IActionResult> Actualizar(string codigo, [FromBody] PersonaActualizar body)
+    public async Task<IActionResult> Actualizar(string codigo, [FromBody] EmpresaActualizar body)
     {
         try
         {
-            // La lista blanca: solo estas 3 columnas pueden viajar al SQL.
             var datos = new Dictionary<string, object>();
             if (body.Nombre != null) { datos["nombre"] = body.Nombre; }
-            if (body.Email != null) { datos["email"] = body.Email; }
-            if (body.Telefono != null) { datos["telefono"] = body.Telefono; }
-
             var filas = await _servicio.ActualizarAsync(codigo, datos);
-            return Ok(new { estado = 200, mensaje = "Persona actualizada exitosamente.", filasAfectadas = filas });
+            return Ok(new { estado = 200, mensaje = "Empresa actualizada exitosamente.", filasAfectadas = filas });
         }
         catch (ArgumentException e)
         {
@@ -195,7 +144,7 @@ public class PersonaController : ControllerBase
         }
         catch (NoEncontradoExcepcion e)
         {
-            return StatusCode(404, new { estado = 404, mensaje = "Persona no encontrada.", detalle = e.Message });
+            return StatusCode(404, new { estado = 404, mensaje = "Empresa no encontrada.", detalle = e.Message });
         }
         catch (ConflictoExcepcion e)
         {
@@ -216,16 +165,13 @@ public class PersonaController : ControllerBase
         }
     }
 
-    // ------------------------------------------------------------
-    // DELETE /api/persona/{codigo}  →  eliminar
-    // ------------------------------------------------------------
     [HttpDelete("{codigo}")]
     public async Task<IActionResult> Eliminar(string codigo)
     {
         try
         {
             var filas = await _servicio.EliminarAsync(codigo);
-            return Ok(new { estado = 200, mensaje = "Persona eliminada exitosamente.", filasEliminadas = filas });
+            return Ok(new { estado = 200, mensaje = "Empresa eliminada exitosamente.", filasEliminadas = filas });
         }
         catch (ArgumentException e)
         {
@@ -233,7 +179,7 @@ public class PersonaController : ControllerBase
         }
         catch (NoEncontradoExcepcion e)
         {
-            return StatusCode(404, new { estado = 404, mensaje = "Persona no encontrada.", detalle = e.Message });
+            return StatusCode(404, new { estado = 404, mensaje = "Empresa no encontrada.", detalle = e.Message });
         }
         catch (ConflictoExcepcion e)
         {
@@ -250,8 +196,7 @@ public class PersonaController : ControllerBase
         }
         catch (Exception e)
         {
-            // Aquí cae la LLAVE FORÁNEA: eliminar P001 (que es cliente)
-            // hace que la BD rechace el DELETE — integridad referencial:
+            // Ej.: eliminar con hijos (FK) → la BD rechaza:
             return StatusCode(500, new { estado = 500, mensaje = "Error interno.", detalle = e.Message });
         }
     }
