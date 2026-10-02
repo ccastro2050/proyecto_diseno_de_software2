@@ -44,13 +44,13 @@ contenido de cada uno en el mismo orden):
 | # | Archivo | Papel |
 |---|---|---|
 | 1 | `docs/spec_kit/1_constitution.md` | Las reglas permanentes (C#, capas, un comando) |
-| 2 | `docs/spec_kit/versiones/v1_producto_postgres/2_spec.md` | QUÉ construir y los criterios de aceptación |
-| 3 | `.../v1_producto_postgres/3_plan.md` | CÓMO: stack, carpetas, capas |
-| 4 | `.../v1_producto_postgres/4_research.md` | Decisiones y alternativas (el porqué del plan) |
-| 5 | `.../v1_producto_postgres/5_data_model.md` | La BD completa (dada) y la tabla producto |
-| 6 | `.../v1_producto_postgres/6_contracts.md` | Los 7 endpoints exactos |
-| 7 | `.../v1_producto_postgres/7_quickstart.md` | El smoke test de validación |
-| 8 | `.../v1_producto_postgres/8_tasks.md` | Las fases, en orden |
+| 2 | `docs/spec_kit/versiones/v1_sin_fk/2_spec.md` | QUÉ construir y los criterios de aceptación |
+| 3 | `.../v1_sin_fk/3_plan.md` | CÓMO: stack, carpetas, capas |
+| 4 | `.../v1_sin_fk/4_research.md` | Decisiones y alternativas (el porqué del plan) |
+| 5 | `.../v1_sin_fk/5_data_model.md` | La BD completa (dada) y la tabla producto |
+| 6 | `.../v1_sin_fk/6_contracts.md` | Los 7 endpoints exactos |
+| 7 | `.../v1_sin_fk/7_quickstart.md` | El smoke test de validación |
+| 8 | `.../v1_sin_fk/8_tasks.md` | Las fases, en orden |
 
 Además de los 8 documentos, la versión trae **dos artefactos que NO se
 suben al chat ni los genera la IA**: `db/bdfacturas_postgres.sql` (el script
@@ -74,21 +74,88 @@ la IA lo que viene — la regla es que la v1 no anticipa).
 clonado es el **material de referencia**. Su trabajo de reconstrucción va
 en un **proyecto propio, en una carpeta nueva y vacía**:
 
-1. Cree una carpeta para su proyecto (ej.: `mi_v1_producto/`) donde usted
+1. Cree una carpeta para su proyecto (ej.: `mi_v1_sin_fk/`) donde usted
    guarda sus trabajos — fuera de la carpeta clonada.
 2. Ábrala en VS Code (*File → Open Folder*).
 3. **Cree las CARPETAS** (el chat no puede tocar su disco). En la terminal
    integrada (*Terminal → New Terminal*, PowerShell), parado en su carpeta:
 
    ```powershell
-   mkdir docs\spec_kit\versiones\v1_producto_postgres, db, api_facturas\Modelos, api_facturas\Peticiones, api_facturas\Controllers, api_facturas\Servicios, api_facturas\Repositorios, api_facturas\Excepciones, api_facturas\pruebas
+   mkdir docs\spec_kit\versiones\v1_sin_fk, db, api_facturas\Modelos, api_facturas\Peticiones, api_facturas\Controllers, api_facturas\Servicios, api_facturas\Repositorios, api_facturas\Excepciones, api_facturas\pruebas, front_flask\Modelos, front_flask\Servicios, front_flask\Components\Layout, front_flask\Components\Pages, front_flask\static
    ```
 
 4. **Cree los ARCHIVOS VACÍOS** — **USTED los irá llenando** uno a uno,
    pegando en cada archivo el código que la IA le entregue:
 
    ```powershell
-   New-Item .gitignore, docker-compose.yml, api_facturas\ApiFacturas.csproj, api_facturas\Program.cs, api_facturas\appsettings.json, api_facturas\Dockerfile, api_facturas\Modelos\Producto.cs, api_facturas\Peticiones\ProductoCrear.cs, api_facturas\Peticiones\ProductoReemplazo.cs, api_facturas\Peticiones\ProductoActualizar.cs, api_facturas\Controllers\ProductoController.cs, api_facturas\Servicios\IServicioProducto.cs, api_facturas\Servicios\ServicioProducto.cs, api_facturas\Repositorios\IRepositorioProducto.cs, api_facturas\Repositorios\RepositorioProductoPostgres.cs, api_facturas\Excepciones\NoEncontradoExcepcion.cs, api_facturas\pruebas\PruebaCapas.csproj, api_facturas\pruebas\Programa.cs
+   # Los de la API — SEIS recursos con sus capas:
+   New-Item .gitignore, docker-compose.yml, api_facturas\ApiFacturas.csproj,`
+     api_facturas\Program.cs, api_facturas\appsettings.json,`
+     api_facturas\Dockerfile, api_facturas\Modelos\Producto.cs,`
+     api_facturas\Peticiones\ProductoCrear.cs,`
+     api_facturas\Peticiones\ProductoReemplazo.cs,`
+     api_facturas\Peticiones\ProductoActualizar.cs,`
+     api_facturas\Repositorios\IRepositorioProducto.cs,`
+     api_facturas\Repositorios\RepositorioProductoPostgres.cs,`
+     api_facturas\Servicios\IServicioProducto.cs,`
+     api_facturas\Servicios\ServicioProducto.cs,`
+     api_facturas\Controllers\ProductoController.cs,`
+     api_facturas\Modelos\Empresa.cs, api_facturas\Peticiones\EmpresaCrear.cs,`
+     api_facturas\Peticiones\EmpresaReemplazo.cs,`
+     api_facturas\Peticiones\EmpresaActualizar.cs,`
+     api_facturas\Repositorios\IRepositorioEmpresa.cs,`
+     api_facturas\Repositorios\RepositorioEmpresaPostgres.cs,`
+     api_facturas\Servicios\IServicioEmpresa.cs,`
+     api_facturas\Servicios\ServicioEmpresa.cs,`
+     api_facturas\Controllers\EmpresaController.cs,`
+     api_facturas\Modelos\Persona.cs, api_facturas\Peticiones\PersonaCrear.cs,`
+     api_facturas\Peticiones\PersonaReemplazo.cs,`
+     api_facturas\Peticiones\PersonaActualizar.cs,`
+     api_facturas\Repositorios\IRepositorioPersona.cs,`
+     api_facturas\Repositorios\RepositorioPersonaPostgres.cs,`
+     api_facturas\Servicios\IServicioPersona.cs,`
+     api_facturas\Servicios\ServicioPersona.cs,`
+     api_facturas\Controllers\PersonaController.cs, api_facturas\Modelos\Rol.cs,`
+     api_facturas\Peticiones\RolCrear.cs,`
+     api_facturas\Peticiones\RolReemplazo.cs,`
+     api_facturas\Peticiones\RolActualizar.cs,`
+     api_facturas\Repositorios\IRepositorioRol.cs,`
+     api_facturas\Repositorios\RepositorioRolPostgres.cs,`
+     api_facturas\Servicios\IServicioRol.cs,`
+     api_facturas\Servicios\ServicioRol.cs,`
+     api_facturas\Controllers\RolController.cs, api_facturas\Modelos\Ruta.cs,`
+     api_facturas\Peticiones\RutaCrear.cs,`
+     api_facturas\Peticiones\RutaReemplazo.cs,`
+     api_facturas\Peticiones\RutaActualizar.cs,`
+     api_facturas\Repositorios\IRepositorioRuta.cs,`
+     api_facturas\Repositorios\RepositorioRutaPostgres.cs,`
+     api_facturas\Servicios\IServicioRuta.cs,`
+     api_facturas\Servicios\ServicioRuta.cs,`
+     api_facturas\Controllers\RutaController.cs,`
+     api_facturas\Modelos\Usuario.cs, api_facturas\Peticiones\UsuarioCrear.cs,`
+     api_facturas\Peticiones\UsuarioReemplazo.cs,`
+     api_facturas\Peticiones\UsuarioActualizar.cs,`
+     api_facturas\Repositorios\IRepositorioUsuario.cs,`
+     api_facturas\Repositorios\RepositorioUsuarioPostgres.cs,`
+     api_facturas\Servicios\IServicioUsuario.cs,`
+     api_facturas\Servicios\ServicioUsuario.cs,`
+     api_facturas\Controllers\UsuarioController.cs,`
+     api_facturas\Excepciones\NoEncontradoExcepcion.cs,`
+     api_facturas\pruebas\PruebaCapas.csproj, api_facturas\pruebas\Programa.cs
+
+   # Y los de la INTERFAZ GRAFICA, que tambien es de la v1:
+   New-Item front_flask\requirements.txt, front_flask\app.py,`
+     front_flask\Dockerfile, front_flask\entidades.py,`
+     front_flask\cliente_api.py, front_flask\rutas_entidades.py,`
+     front_flask\templates\base.html, front_flask\templates\inicio.html,`
+     front_flask\templates\entidades\lista.html,`
+     front_flask\templates\entidades\formulario.html,`
+     front_flask\static\marca.css
+
+   # SON ONCE ARCHIVOS, no cuarenta: las vistas son GENERICAS y los seis
+   # recursos salen del registro de entidades.py. No hay un archivo por
+   # recurso, y por eso tampoco hay un modelo por recurso: el JSON se lee
+   # como diccionario, y la forma la define el contrato de la API.
    ```
 
    (`db/bdfacturas_postgres.sql` NO está en la lista a propósito:
@@ -102,28 +169,34 @@ en un **proyecto propio, en una carpeta nueva y vacía**:
    |---|---|
    | `db\bdfacturas_postgres.sql` | `db\` |
    | `docs\spec_kit\1_constitution.md` | `docs\spec_kit\` |
-   | Los 7 `.md` de `docs\spec_kit\versiones\v1_producto_postgres\` | `docs\spec_kit\versiones\v1_producto_postgres\` |
+   | Los 7 `.md` de `docs\spec_kit\versiones\v1_sin_fk\` | `docs\spec_kit\versiones\v1_sin_fk\` |
 
    (Estos 10 vienen dados — la IA no los genera: las specs se le SUBEN al
    chat, y los scripts de `db/` son la BD completa ya escrita.)
 
 **Antes de abrir el chat, verifique:** `docs\spec_kit\1_constitution.md`
-debe existir, `docs\spec_kit\versiones\v1_producto_postgres\` debe tener
+debe existir, `docs\spec_kit\versiones\v1_sin_fk\` debe tener
 **7 archivos** (2_spec a 8_tasks), y `db\` debe tener `bdfacturas_postgres.sql`
 (con contenido, ~1.060 líneas). Si algo está vacío, falta el
 paso 5.
+
+> **Son 63 archivos de API y 29 de interfaz grafica, y la cuenta
+> sorprende.** Es la medida honesta de lo que son seis recursos con sus
+> capas — y es exactamente el argumento del que nace la idea de generar
+> codigo: cuando se repite tanto, hay un patron, y el patron se puede
+> decir una vez.
 
 La estructura queda lista ANTES de hablar con la IA (es la de `3_plan.md`
 §2); al lado, la fase en la que la IA le entregará el código de cada
 archivo para que USTED lo pegue:
 
 ```
-mi_v1_producto/                   ← SU carpeta
+mi_v1_sin_fk/                   ← SU carpeta
 ├── docs/
 │   └── spec_kit/                 ← las especificaciones, IGUAL que en el repo
 │       ├── 1_constitution.md
 │       └── versiones/
-│           └── v1_producto_postgres/  ← los 7 documentos de la v1
+│           └── v1_sin_fk/  ← los 7 documentos de la v1
 ├── .gitignore                    ← Fase 6 (excluye bin/, obj/, *.session.sql)
 ├── docker-compose.yml            ← Fase 0 (postgres) y Fase 6 (api-facturas)
 ├── db/
@@ -174,7 +247,7 @@ completo actualizado.
 
 **A la terminal SOLO se le pegan COMANDOS** — lo que viene en las cajitas
 de código del chat, uno a la vez. Si pega el texto del mensaje (las
-frases), la terminal intentará ejecutar cada palabra y llenará la pantalla
+frases), la terminal intentará ejecutar cada palabra y llenará la interfaz gráfica
 de errores tipo `'Te' no se reconoce como nombre de un cmdlet` (no daña
 nada, pero asusta). Al chat, texto; a la terminal, comandos.
 
@@ -212,9 +285,52 @@ constitución (reglas permanentes) y el spec kit de la versión 1 (spec, plan,
 research con las decisiones, modelo de datos, contratos, quickstart y tareas).
 
 El proyecto es C# sobre ASP.NET Core (.NET 10) + PostgreSQL — así lo fija
-3_plan.md. Si en tu respuesta aparece OTRO lenguaje o framework (Python,
-Java, Node, PHP…), significa que no leíste los documentos adjuntos: detente
-y dímelo en vez de continuar.
+3_plan.md.
+
+LO QUE HAY QUE CONSTRUIR, Y SON SEIS RECURSOS — NO UNO:
+
+La v1 es el CRUD de las SEIS tablas que NO tienen clave foranea, cada una
+con su interfaz gráfica:
+
+   producto   codigo (texto, PK) · nombre · stock · valorunitario
+   empresa    codigo (texto, PK) · nombre
+   persona    codigo (texto, PK) · nombre · email · telefono
+   rol        id (SERIAL)        · nombre
+   ruta       id (SERIAL)        · ruta · descripcion
+   usuario    email (texto, PK)  · contrasena
+
+Son SEIS REBANADAS VERTICALES IDENTICAS salvo los campos: modelo, tres
+peticiones por verbo, interfaz + repositorio, interfaz + servicio,
+controlador, y su interfaz. Que se repitan es el punto del ejercicio.
+
+DOS COSAS QUE CAMBIAN SEGUN LA TABLA, y no se pueden calcar:
+
+  · `rol` y `ruta` tienen llave SERIAL: el POST NO manda el id —lo genera
+    la base—, asi que su peticion de creacion no lo lleva, y su modelo NO
+    marca el Id como `required`. Si lo exige, el POST tendria que
+    inventarle una llave.
+  · En `ruta`, la COLUMNA se llama `ruta` y la PROPIEDAD tiene que
+    llamarse distinto (RutaTexto), porque C# no permite una propiedad con
+    el mismo nombre que su clase. El SELECT necesita el alias
+    `ruta AS RutaTexto`: sin el, Dapper mapea por nombre, no encuentra la
+    columna, y el campo llega NULL EN SILENCIO —la API responde 200 con el
+    campo vacio—.
+
+Y LA VERSION INCLUYE SU INTERFAZ GRÁFICA: los seis recursos operables desde
+Flask + Jinja2, cada uno con su direccion (/e/producto, /e/empresa,
+/e/persona, /e/rol, /e/ruta, /e/usuario) y sus metadatos en el registro de
+entidades.py. LAS VISTAS SON GENERICAS A PROPOSITO —un solo juego atiende a
+los seis—, y eso NO contradice la regla de que la API tenga una ruta por
+recurso: la API publica un contrato que otros leen, y un /api/{tabla} lo deja
+en blanco; esto no publica nada, es la configuracion de UNA aplicacion, y el
+contrato que consume sigue siendo especifico. La interfaz gráfica no le habla al usuario en jerga:
+ni PUT, ni PATCH, ni 422. Los dos botones de guardar se llaman "Guardar la
+ficha completa" y "Guardar solo lo que cambie".
+ ESTE PROYECTO USA DOS LENGUAJES, uno por proceso: la API en
+C# / ASP.NET Core, y la interfaz gráfica en Python / Flask + Jinja2. Si en tu
+respuesta la API aparece en otro lenguaje, o la interfaz gráfica en otro
+framework (Java, Node, PHP, React…), significa que no leíste los documentos
+adjuntos: detente y dímelo en vez de continuar.
 
 REGLAS DE TRABAJO (no negociables):
 
@@ -257,15 +373,15 @@ REGLAS DE TRABAJO (no negociables):
 8. En mi máquina TAMBIÉN corre el proyecto clonado del curso con sus
    puertos originales. Para que ambos convivan, MI proyecto:
    a. Publica los puertos del host con +100: en el docker-compose.yml la
-      API va "8153:8053" y PostgreSQL va "15553:1433" (adentro de los
+      API va "8152:8052" y PostgreSQL va "15552:5432" (adentro de los
       contenedores todo queda igual que en los documentos).
-   b. El docker-compose.yml empieza con la línea `name: mi_v1_producto`
+   b. El docker-compose.yml empieza con la línea `name: mi_v1_sin_fk`
       (antes de services:) — así Docker lo trata como un proyecto
       distinto al del curso, con sus propios contenedores y volúmenes,
       aunque las carpetas se llamen parecido.
    La cadena de conexión por defecto de appsettings.json (para correr sin
-   Docker) apunta a localhost,15553. Cuando me des URLs o comandos de
-   prueba, usa localhost:8153 (API) y localhost,15553 (BD).
+   Docker) apunta a localhost:15552. Cuando me des URLs o comandos de
+   prueba, usa localhost:8152 (API) y localhost:15552 (BD).
 
 Al final, la versión 1 está TERMINADA solo cuando pasan los 6 criterios de
 aceptación de 2_spec.md, verificados con el smoke test de 7_quickstart.md.
@@ -289,11 +405,11 @@ que entendiste el alcance) y luego arranca con la Fase 0.
    en el chat CADA error tal cual salga (completo). La IA le entrega el
    archivo corregido, usted lo pega y repite hasta que los 6 criterios
    estén en verde. **Ojo con los puertos**: SU proyecto corre con +100
-   (regla 8 del prompt) — donde el quickstart diga `localhost:8053` use
-   `localhost:8153`, y donde diga `15453` use `15553`.
+   (regla 8 del prompt) — donde el quickstart diga `localhost:8052` use
+   `localhost:8152`, y donde diga `15452` use `15552`.
 4. **Si la IA se acelera** y entrega varios archivos de un tirón,
    recuérdele la regla 2b: "de a uno, espera mi listo".
-5. **Si la primera respuesta llega en OTRO lenguaje** (Python, Java, Node,
+5. **Si la primera respuesta pone la API en otro lenguaje** (Python, Java, Node,
    PHP…), no corrija sobre eso: es la señal inequívoca de que la IA **no
    leyó los adjuntos**. Cierre ese chat, verifique que los 8 documentos
    realmente cargaron (deslice el carrusel de adjuntos) y que son los de
@@ -317,10 +433,10 @@ en la terminal (pidiendo permiso). Usted pasa de operador a **supervisor**.
 **Igual que en el chat: NO se trabaja dentro de la carpeta clonada** (esa
 es la referencia). El agente construye en SU proyecto:
 
-1. Cree una carpeta nueva y vacía para su proyecto (ej.: `mi_v1_producto/`)
+1. Cree una carpeta nueva y vacía para su proyecto (ej.: `mi_v1_sin_fk/`)
    y copie dentro: los 8 documentos de la tabla A.1 en `docs\spec_kit\`
    replicando la estructura por versiones (`docs\spec_kit\1_constitution.md`
-   + `docs\spec_kit\versiones\v1_producto_postgres\` con los 7 de la
+   + `docs\spec_kit\versiones\v1_sin_fk\` con los 7 de la
    versión), y el script `db\bdfacturas_postgres.sql` del
    repositorio (la BD viene dada — el agente no debe generarla).
 2. Abra SU carpeta en el IDE (en Antigravity: *Open Folder*; el agente verá
@@ -335,7 +451,7 @@ es la referencia). El agente construye en SU proyecto:
 Construye la VERSIÓN 1 de este proyecto, partiendo de cero.
 
 Primero lee, en este orden, los 8 documentos que están bajo docs/spec_kit/
-(1_constitution.md en la raíz; los demás en versiones/v1_producto_postgres/):
+(1_constitution.md en la raíz; los demás en versiones/v1_sin_fk/):
 1_constitution, 2_spec, 3_plan, 4_research, 5_data_model, 6_contracts,
 7_quickstart y 8_tasks. Después resume en máximo 10 líneas qué vas a
 construir y espera mi confirmación antes de tocar nada. El código va en la
@@ -343,6 +459,46 @@ raíz de este proyecto según la estructura de 3_plan.md (docs/spec_kit/ es
 solo lectura: no la modifiques). La base de datos YA VIENE DADA en
 db/bdfacturas_postgres.sql — úsalo tal cual para montar PostgreSQL;
 no escribas ni modifiques SQL de creación de tablas.
+
+LO QUE HAY QUE CONSTRUIR, Y SON SEIS RECURSOS — NO UNO:
+
+La v1 es el CRUD de las SEIS tablas que NO tienen clave foranea, cada una
+con su interfaz gráfica:
+
+   producto   codigo (texto, PK) · nombre · stock · valorunitario
+   empresa    codigo (texto, PK) · nombre
+   persona    codigo (texto, PK) · nombre · email · telefono
+   rol        id (SERIAL)        · nombre
+   ruta       id (SERIAL)        · ruta · descripcion
+   usuario    email (texto, PK)  · contrasena
+
+Son SEIS REBANADAS VERTICALES IDENTICAS salvo los campos: modelo, tres
+peticiones por verbo, interfaz + repositorio, interfaz + servicio,
+controlador, y su interfaz. Que se repitan es el punto del ejercicio.
+
+DOS COSAS QUE CAMBIAN SEGUN LA TABLA, y no se pueden calcar:
+
+  · `rol` y `ruta` tienen llave SERIAL: el POST NO manda el id —lo genera
+    la base—, asi que su peticion de creacion no lo lleva, y su modelo NO
+    marca el Id como `required`. Si lo exige, el POST tendria que
+    inventarle una llave.
+  · En `ruta`, la COLUMNA se llama `ruta` y la PROPIEDAD tiene que
+    llamarse distinto (RutaTexto), porque C# no permite una propiedad con
+    el mismo nombre que su clase. El SELECT necesita el alias
+    `ruta AS RutaTexto`: sin el, Dapper mapea por nombre, no encuentra la
+    columna, y el campo llega NULL EN SILENCIO —la API responde 200 con el
+    campo vacio—.
+
+Y LA VERSION INCLUYE SU INTERFAZ GRÁFICA: los seis recursos operables desde
+Flask + Jinja2, cada uno con su direccion (/e/producto, /e/empresa,
+/e/persona, /e/rol, /e/ruta, /e/usuario) y sus metadatos en el registro de
+entidades.py. LAS VISTAS SON GENERICAS A PROPOSITO —un solo juego atiende a
+los seis—, y eso NO contradice la regla de que la API tenga una ruta por
+recurso: la API publica un contrato que otros leen, y un /api/{tabla} lo deja
+en blanco; esto no publica nada, es la configuracion de UNA aplicacion, y el
+contrato que consume sigue siendo especifico. La interfaz gráfica no le habla al usuario en jerga:
+ni PUT, ni PATCH, ni 422. Los dos botones de guardar se llaman "Guardar la
+ficha completa" y "Guardar solo lo que cambie".
 
 REGLAS (no negociables):
 
@@ -361,10 +517,10 @@ REGLAS (no negociables):
 4. Todo en español, C# sobre ASP.NET Core (.NET 10), con los comentarios
    didácticos que exige la constitución.
 5. En esta máquina TAMBIÉN corre el proyecto clonado del curso. MI proyecto
-   publica los puertos del host con +100 (API "8153:8053", PostgreSQL
-   "15553:1433") y su docker-compose.yml empieza con `name: mi_v1_producto`.
+   publica los puertos del host con +100 (API "8152:8052", PostgreSQL
+   "15552:5432") y su docker-compose.yml empieza con `name: mi_v1_sin_fk`.
 6. Al final, corre el smoke test completo de 7_quickstart.md §2 (con mis
-   puertos: localhost:8153) y muéstrame la evidencia de los 6 criterios de
+   puertos: localhost:8152) y muéstrame la evidencia de los 6 criterios de
    aceptación de 2_spec.md. La versión no está terminada hasta que los 6
    estén en verde.
 ```
@@ -377,9 +533,3 @@ REGLAS (no negociables):
   deténgalo y pídale: "vuelve a la fase N y muéstrame su verificación".
 - **No le crea "terminado":** pídale la evidencia (la salida real de los
   comandos). El criterio de cierre es el smoke test corrido y en verde.
-
-> 📐 **Los diagramas Mermaid de las specs NO se quitan al subirlas:** son
-> texto que la IA lee como parte del contrato (la secuencia del 404 le
-> dice exactamente quién lanza la excepción y quién la traduce; el
-> diagrama de clases le dice qué interfaces existen). Un diagrama-imagen
-> sería invisible para el chat; un Mermaid es especificación ejecutable.

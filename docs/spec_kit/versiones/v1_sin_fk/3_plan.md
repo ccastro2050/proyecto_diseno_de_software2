@@ -1,4 +1,4 @@
-# Plan técnico — Versión 1: producto + PostgreSQL (C#/ASP.NET Core)
+# Plan técnico — Versión 1: las seis tablas sin FK (C#/ASP.NET Core + Flask)
 
 > **Versión 1** · CÓMO construir lo especificado en [2_spec.md](2_spec.md).
 > El porqué de cada decisión: [4_research.md](4_research.md) · contratos
@@ -26,8 +26,8 @@
 └── api_facturas/
     ├── ApiFacturas.csproj            # el proyecto .NET (paquetes: Npgsql y Swashbuckle)
     ├── Program.cs                    # punto de entrada: ENSAMBLADOR (DI) + 422 + rutas
-    ├── appsettings.json              # cadena de conexión (default localhost:15453)
-    ├── Dockerfile                    # sdk:10.0 + dotnet watch (puerto 8053)
+    ├── appsettings.json              # cadena de conexión (default localhost:15452)
+    ├── Dockerfile                    # sdk:10.0 + dotnet watch (puerto 8052)
     ├── Modelos/
     │   └── Producto.cs               # el MODELO = la ENTIDAD: 4 propiedades tipadas
     ├── Peticiones/
@@ -49,6 +49,37 @@
         └── Programa.cs               # el servicio con un repositorio falso, sin BD
 ```
 
+### 2bis. El front, que es un proyecto APARTE
+
+```
+front_flask/
+├── requirements.txt              Flask y requests — NI UN driver de base de datos
+├── app.py                        el ensamblador: registra las rutas y arma el menú
+├── Dockerfile                    python:3.12-slim + flask --reload, igual que la API
+├── entidades.py                  EL REGISTRO: una entrada por recurso
+├── cliente_api.py                el ÚNICO sitio que sabe de HTTP
+├── rutas_entidades.py            las vistas, genéricas: /e/<clave>
+├── templates/
+│   ├── base.html                 el armazón y el menú
+│   ├── inicio.html
+│   └── entidades/  lista.html · formulario.html
+└── static/
+    ├── lib/bootstrap/            SERVIDO DESDE AQUI, nunca por CDN
+    └── marca.css                 la capa del proyecto, ENCIMA de Bootstrap
+```
+
+**Que el front esté en otro lenguaje que la API ayuda**, y conviene decirlo:
+con los dos en C# la tentación de compartir una clase existe. Aquí no hay
+ninguna clase que compartir — lo único que ata los dos procesos es **el
+contrato**, que es exactamente como debe ser.
+
+| Regla | Por qué |
+|---|---|
+| **El front no tiene modelos** | Lee el JSON como diccionarios. Lo que define la forma es el **contrato** de la API, y está escrito en `6_contracts.md` |
+| **`requirements.txt` no tiene `psycopg`** | No es un olvido: es la comprobación de que este proceso **no puede** llegar a PostgreSQL ni queriendo |
+| **Las vistas son GENÉRICAS, y la API NO** | Un solo juego de vistas atiende todos los recursos, con la entidad en la URL. Y la API sigue exponiendo **una ruta por recurso**: la API publica un **contrato** que otros leen, y un `/api/{tabla}` lo deja en blanco; esto no publica nada, es la configuración de **una** aplicación |
+| **Bootstrap SI, por CDN NO** | Se sirve desde `static/lib/bootstrap/`, y `static/marca.css` va **encima** con las clases del proyecto. A igual especificidad gana el último que carga: por eso el orden no es decorativo |
+
 ## 3. Arquitectura en capas (flujo de una petición)
 
 ```
@@ -64,102 +95,6 @@ HTTP → ASP.NET routing        (los atributos [HttpGet]/[HttpPost]… deciden e
 **Regla de dependencias:** controller → servicio → interfaz de repositorio.
 Solo el ENSAMBLADOR (la sección de DI de `Program.cs`) conoce clases
 concretas.
-
-### 3.1 Los planos del diseño (Mermaid: texto que la IA también lee)
-
-**Arquitectura de despliegue** — lo que levanta `docker compose up -d`
-es un **sistema de servidores en miniatura**: cada contenedor se comporta
-como un servidor independiente, con su propio nombre de host, conectados
-por una red interna privada — igual que en un centro de datos, pero
-dentro de su PC:
-
-```mermaid
-flowchart LR
-    NAV["Navegador / curl / Swagger<br/>(el mundo exterior)"]
-    subgraph PC["Su PC — Docker Desktop (el 'centro de datos')"]
-        subgraph RED["red interna privada del compose (una LAN virtual)"]
-            API["SERVIDOR DE APLICACIONES<br/>contenedor api-facturas<br/>hostname interno: api-facturas<br/>.NET 10 + dotnet watch · escucha en 8053"]
-            PG[("SERVIDOR DE BASE DE DATOS<br/>contenedor postgres<br/>hostname interno: postgres<br/>postgres:16-alpine · escucha en 5432<br/>volumen pgdata · se siembra SOLO la 1ª vez")]
-        end
-    end
-    NAV -->|"ÚNICA puerta publicada al exterior:<br/>localhost:8053"| API
-    API -->|"por la LAN interna, por NOMBRE:<br/>postgres:5432 (DNS de Docker)"| PG
-    NAV -.->|"puerta opcional de diagnóstico:<br/>localhost:15453 (DBeaver/pgAdmin)"| PG
-```
-
-**Guía de lectura:** son DOS servidores, no un programa. La API no busca
-la BD en `localhost` sino en el hostname `postgres` — Docker tiene su
-propio DNS y resuelve el nombre del servicio a la IP interna del
-contenedor, como en una red de servidores real. Hacia afuera solo se
-publican las puertas que el compose declara (`8053` para usar el
-sistema; `15453` solo para inspeccionar la BD con una herramienta). Por
-eso el MISMO diseño que corre en su PC se despliega igual en un servidor
-de verdad: cambiar de máquina no cambia la arquitectura.
-
-**Diagrama de clases de la rebanada producto** — las dependencias cruzan
-por INTERFACES (la D de SOLID, visible):
-
-```mermaid
-classDiagram
-    class ProductoController {
-        +Listar(limite)
-        +Obtener(codigo)
-        +Crear(ProductoCrear)
-        +Reemplazar(codigo, ProductoReemplazo)
-        +Actualizar(codigo, ProductoActualizar)
-        +Eliminar(codigo)
-    }
-    class IServicioProducto {
-        <<interface>>
-    }
-    class ServicioProducto {
-        -IRepositorioProducto repositorio
-    }
-    class IRepositorioProducto {
-        <<interface>>
-        +ObtenerTodosAsync(limite)
-        +ObtenerPorCodigoAsync(codigo)
-        +CrearAsync(producto)
-        +ActualizarAsync(codigo, datos)
-        +EliminarAsync(codigo)
-    }
-    class RepositorioProductoPostgres {
-        -string cadenaConexion
-    }
-    class Producto {
-        +string Codigo
-        +string Nombre
-        +int Stock
-        +decimal Valorunitario
-    }
-    ProductoController --> IServicioProducto : recibe por constructor
-    ServicioProducto ..|> IServicioProducto : implementa
-    ServicioProducto --> IRepositorioProducto : recibe por constructor
-    RepositorioProductoPostgres ..|> IRepositorioProducto : implementa
-    RepositorioProductoPostgres ..> Producto : arma desde filas
-```
-
-**Secuencia del camino feliz** — `GET /api/producto/PR001` viajando por
-las capas (compárela con las secuencias de ERROR en
-[6_contracts.md](6_contracts.md)):
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Cli as Cliente HTTP
-    participant Ctl as ProductoController
-    participant Srv as ServicioProducto
-    participant Rep as RepositorioProductoPostgres
-    participant BD as PostgreSQL
-    Cli->>Ctl: GET /api/producto/PR001
-    Ctl->>Srv: ObtenerPorCodigoAsync("PR001")
-    Srv->>Rep: ObtenerPorCodigoAsync("PR001")
-    Rep->>BD: SELECT ... WHERE codigo = @codigo
-    BD-->>Rep: 1 fila
-    Rep-->>Srv: objeto Producto
-    Srv-->>Ctl: objeto Producto
-    Ctl-->>Cli: 200 + JSON
-```
 
 ## 4. Decisiones de diseño clave
 
@@ -214,12 +149,12 @@ INSERT INTO producto (codigo, nombre, stock, valorunitario) VALUES (@codigo, @no
 UPDATE producto SET … WHERE codigo = @codigo_clave   -- los campos que lleguen (PUT: los 3; PATCH: los enviados)
 DELETE FROM producto WHERE codigo = @codigo
 ```
-- `LIMIT @limite` es el Top-N del dialecto PostgreSQL (va al FINAL del
-  SELECT y acepta parámetro).
+- `LIMIT @limite` es el Top-N del dialecto PostgreSQL (va al FINAL y
+  acepta parámetro).
 - Dapper ejecuta ese SQL tal cual: `QueryAsync<Producto>` para lecturas
-  (mapea columna→propiedad por nombre) y `ExecuteAsync` para
-  escrituras (devuelve filas afectadas). Conexión por operación con
-  `await using`; todo `async`.
+  (mapea columna→propiedad por nombre) y `ExecuteAsync` para escrituras
+  (devuelve filas afectadas). Conexión por operación con `await using`;
+  todo `async`.
 - El SET del UPDATE se arma solo con columnas que salen de las PETICIONES
   (lista blanca), nunca con claves del cliente.
 - Detalle amable del motor: en PostgreSQL, las filas afectadas de un UPDATE
@@ -249,8 +184,8 @@ contenedor inicializador: esa lección llegará con el segundo motor.)
 ## 5. Docker: un solo comando desde v1
 
 La constitución (Artículo 4) manda: `docker compose up -d --build` deja TODO
-funcionando. En v1 eso son **dos servicios**: `postgres` (15453 al host,
-se siembra solo) y `api-facturas` (8053, código montado +
+funcionando. En v1 eso son **dos servicios**: `postgres` (15452 al host,
+se siembra solo) y `api-facturas` (8052, código montado +
 `dotnet watch`, `bin/` y `obj/` en volúmenes anónimos para no mezclar
 compilados de Linux con los de Windows). El detalle línea por línea está en
 el `docker-compose.yml` de la raíz, comentado.

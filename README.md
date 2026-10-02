@@ -1,4 +1,4 @@
-# Proyecto Diseño de Software — construcción por versiones
+# Proyecto Diseño de Software — versión 2: el CRUD de las 12 tablas
 
 Proyecto de curso (USB Medellín). Aquí NO se descarga un sistema terminado:
 **se construye un sistema real por versiones en C# / ASP.NET Core**, guiado
@@ -116,22 +116,57 @@ docker compose up -d --build
 ```
 
 **Eso es todo.** La primera vez tarda unos minutos (descarga imágenes,
-PostgreSQL se siembra solo con el script montado, y la primera
-compilación de la API toma ~1 minuto más). Al terminar quedan corriendo la base de datos (bdfacturas
-completa en PostgreSQL) y la API:
+PostgreSQL se siembra solo con el script montado, y la primera compilación de
+la API toma ~1 minuto más). Al terminar quedan corriendo **tres contenedores**:
+la base de datos, la API y la **interfaz gráfica**.
+
+### Lo primero que hay que abrir
 
 | Qué | Dónde |
 |---|---|
-| **API Facturas** — diagnóstico | http://localhost:8053/ |
-| **Swagger** (documentación interactiva: ver y probar los endpoints) | http://localhost:8053/swagger |
-| Listar productos | http://localhost:8053/api/producto |
+| **La interfaz gráfica** — por aquí se empieza | **http://localhost:8068** |
+| **Swagger** — la API, para verla y probarla | http://localhost:8053/swagger |
+| La API — diagnóstico | http://localhost:8053/ |
 | PostgreSQL (para SQLTools/pgAdmin, opcional) | `localhost:15453` · `postgres`/`Diseno123!` |
 
-Pruebe la joya didáctica de la v1: PUT con solo `{"stock": 99}` → 422; el
-mismo body en PATCH → 200. Esa diferencia es parte de lo que enseña la
-versión (contratos exactos en el spec kit).
+> **La interfaz gráfica y la API son dos puertos distintos**, y conviene no
+> confundirlos: el **8068** es lo que se abre en el navegador; el **8053**
+> es lo que esa interfaz consume. Abrir `8068/swagger` da 404 — Swagger vive
+> en la API.
+>
+> Y se puede comprobar que son dos procesos: `docker compose stop api-facturas`
+> y vuelva a cargar cualquier sección. El menú sigue en pie, con su aviso, y
+> **sin una sola fila**.
 
-> ℹ️ Este proyecto usa los puertos 8053 y 15453: si alguno ya está ocupado
+### El menú de la interfaz gráfica
+
+**11 entradas.** Es la forma más rápida de ver que cada versión **incluye la anterior**:
+
+| Dirección | En el menú | De la |
+|---|---|---|
+| `/facturas` | **Facturas** | v2 |
+| `/e/producto` | Productos | v1 |
+| `/e/empresa` | Empresas | v1 |
+| `/e/persona` | Personas | v1 |
+| `/e/rol` | Roles | v1 |
+| `/e/ruta` | Rutas | v1 |
+| `/e/usuario` | Usuarios | v1 |
+| `/e/cliente` | Clientes | v2 |
+| `/e/vendedor` | Vendedores | v2 |
+| `/e/rol_usuario` | Roles por usuario | v2 |
+| `/e/rutarol` | Permisos por rol | v2 |
+
+> **El menú nombra RECURSOS del dominio, no tablas ni rutas de la API.**
+> Dice «Facturas», no `/api/factura`.
+>
+> Y las direcciones son **genéricas** —`/e/producto`, `/e/empresa`—, al
+> contrario que la API, donde cada recurso tiene su ruta propia. No es una
+> contradicción: la API expone un **contrato** que otros leen, y un
+> `/api/{tabla}` lo dejaría en blanco. Esto no expone nada: es la
+> configuración de **una** aplicación, y el contrato que consume sigue siendo
+> específico. Las entidades están en `front_flask/entidades.py`.
+
+> ℹ️ Este proyecto usa los puertos **8068** (interfaz gráfica), **8053** (API) y **15453** (PostgreSQL): si alguno ya está ocupado
 > en su máquina, cámbielo en `docker-compose.yml` (el lado izquierdo del
 > `"puerto:puerto"`).
 >
@@ -161,7 +196,7 @@ es **reconstruirla usted mismo, en una carpeta propia (fuera del clon)**,
 siguiendo las especificaciones — con o sin ayuda de IA:
 
 > 🤖 ¿Va a trabajar con IA? Siga la **[Guía para construir la versión con
-> IA](docs/spec_kit/versiones/v2_persona_factura/GUIA_IA2.md)** — cubre los dos caminos con su prompt exacto listo
+> IA](docs/spec_kit/versiones/v2_con_fk/GUIA_IA2.md)** — cubre los dos caminos con su prompt exacto listo
 > para copiar: **chat web** (Gemini, DeepSeek, ChatGPT: qué archivos
 > subirle) e **IDE agéntico** (Antigravity, Cursor, Claude Code: cómo
 > supervisar al agente).
@@ -197,8 +232,9 @@ proyecto_diseno_de_software2/
 │
 ├── postman/                     # La colección de Postman lista para importar:
 │                                #   los 13 endpoints en orden didáctico (alternativa a Swagger)
+├── front_flask/                 # LA INTERFAZ GRÁFICA — Flask + Jinja2 (puerto 8068)
 │
-├── api_facturas/                # LA API DE LA v1 — C#/ASP.NET Core (puerto 8053)
+├── api_facturas/                # LA API — C#/ASP.NET Core (puerto 8053)
 │   ├── ApiFacturas.csproj       # El proyecto .NET (paquetes: Npgsql, Dapper y Swashbuckle)
 │   ├── Program.cs               # Punto de entrada: ENSAMBLADOR (DI) + 422 + rutas
 │   ├── appsettings.json         # Cadena de conexión (default localhost:15453)
@@ -256,13 +292,13 @@ de aceptación (commit + tag). Mapa completo:
 | Documento | Contenido |
 |---|---|
 | [1_constitution.md](docs/spec_kit/1_constitution.md) | Las reglas permanentes del proyecto |
-| [2_spec.md](docs/spec_kit/versiones/v2_persona_factura/2_spec.md) | QUÉ construir y los criterios de aceptación |
-| [3_plan.md](docs/spec_kit/versiones/v2_persona_factura/3_plan.md) | CÓMO: stack, estructura y diseño de las capas |
-| [4_research.md](docs/spec_kit/versiones/v2_persona_factura/4_research.md) | Decisiones y alternativas (el porqué) |
-| [5_data_model.md](docs/spec_kit/versiones/v2_persona_factura/5_data_model.md) | La BD completa (dada) y la tabla producto |
-| [6_contracts.md](docs/spec_kit/versiones/v2_persona_factura/6_contracts.md) | Los 7 endpoints con formatos exactos |
-| [7_quickstart.md](docs/spec_kit/versiones/v2_persona_factura/7_quickstart.md) | Arranque y smoke test |
-| [8_tasks.md](docs/spec_kit/versiones/v2_persona_factura/8_tasks.md) | Orden de construcción por fases verificables |
+| [2_spec.md](docs/spec_kit/versiones/v2_con_fk/2_spec.md) | QUÉ construir y los criterios de aceptación |
+| [3_plan.md](docs/spec_kit/versiones/v2_con_fk/3_plan.md) | CÓMO: stack, estructura y diseño de las capas |
+| [4_research.md](docs/spec_kit/versiones/v2_con_fk/4_research.md) | Decisiones y alternativas (el porqué) |
+| [5_data_model.md](docs/spec_kit/versiones/v2_con_fk/5_data_model.md) | La BD completa (dada) y la tabla producto |
+| [6_contracts.md](docs/spec_kit/versiones/v2_con_fk/6_contracts.md) | Los 7 endpoints con formatos exactos |
+| [7_quickstart.md](docs/spec_kit/versiones/v2_con_fk/7_quickstart.md) | Arranque y smoke test |
+| [8_tasks.md](docs/spec_kit/versiones/v2_con_fk/8_tasks.md) | Orden de construcción por fases verificables |
 
 ## 5. Material conceptual del curso
 

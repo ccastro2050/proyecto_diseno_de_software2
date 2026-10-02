@@ -1,4 +1,4 @@
-# Modelo de datos — Versión 1: la BD completa (dada) y la tabla producto
+# Modelo de datos — Versión 1: la BD completa (dada) y las SEIS tablas sin FK
 
 > **Versión 1** · La base de datos NO se diseña en esta versión: **viene
 > dada** ([4_research.md](4_research.md) D4). Este documento describe lo que
@@ -32,89 +32,6 @@ almacenados** de consulta — todos esperando a las versiones siguientes.
 detalle, usuarios y roles. Credenciales de BD (didácticas): `sa` /
 `Diseno123!`.
 
-**El diagrama entidad-relación de bdfacturas** (las 12 tablas — la v1
-solo puede TOCAR `producto`, pero el diseño completo se conoce desde el
-día 1):
-
-```mermaid
-erDiagram
-    persona ||--o{ cliente : "fkcodpersona"
-    empresa |o--o{ cliente : "fkcodempresa (acepta NULL)"
-    persona ||--o{ vendedor : "fkcodpersona"
-    cliente ||--o{ factura : "fkidcliente"
-    vendedor ||--o{ factura : "fkidvendedor"
-    factura ||--|{ productosporfactura : "fknumfactura (ON DELETE CASCADE)"
-    producto ||--o{ productosporfactura : "fkcodproducto"
-    usuario ||--o{ rol_usuario : "fkemail"
-    rol ||--o{ rol_usuario : "fkidrol"
-    ruta ||--o{ rutarol : "fkidruta (CASCADE)"
-    rol ||--o{ rutarol : "fkidrol (CASCADE)"
-
-    producto {
-        varchar codigo PK
-        varchar nombre
-        int stock
-        numeric valorunitario
-    }
-    persona {
-        varchar codigo PK
-        varchar nombre
-        varchar email
-        varchar telefono
-    }
-    empresa {
-        varchar codigo PK
-        varchar nombre
-    }
-    cliente {
-        serial id PK
-        numeric credito "DEFAULT 0"
-        varchar fkcodpersona FK
-        varchar fkcodempresa FK "NULL"
-    }
-    vendedor {
-        serial id PK
-        int carnet
-        varchar direccion
-        varchar fkcodpersona FK
-    }
-    factura {
-        serial numero PK
-        timestamp fecha
-        numeric total "lo escribe el TRIGGER"
-        varchar estado "activa - anulada"
-        int fkidcliente FK
-        int fkidvendedor FK
-    }
-    productosporfactura {
-        int fknumfactura PK, FK
-        varchar fkcodproducto PK, FK
-        int cantidad
-        numeric subtotal "lo escribe el TRIGGER"
-    }
-    usuario {
-        varchar email PK
-        varchar contrasena "hash BCrypt"
-    }
-    rol {
-        serial id PK
-        varchar nombre
-    }
-    ruta {
-        serial id PK
-        varchar ruta UK
-        varchar descripcion
-    }
-    rol_usuario {
-        varchar fkemail PK, FK
-        int fkidrol PK, FK
-    }
-    rutarol {
-        int fkidruta PK, FK
-        int fkidrol PK, FK
-    }
-```
-
 ## 2. Lo ÚNICO que la v1 puede nombrar: la tabla `producto`
 
 | Columna | Tipo (PostgreSQL) | Regla |
@@ -146,8 +63,12 @@ public class Producto
 
 ## 4. Reglas de esta versión
 
-- El código de la v1 **solo puede nombrar `producto`** — las otras 11
-  tablas existen pero son territorio de la v2 en adelante.
+- El código de la v1 **solo puede nombrar las SEIS tablas sin clave
+  foránea** —`producto`, `empresa`, `persona`, `rol`, `ruta`, `usuario`—. Las
+  otras seis existen en la base pero son territorio de la v2.
+- **`usuario` y `rol` SÍ son de esta versión**, aunque sean del control de
+  acceso: el criterio es no tener clave foránea, y no la tienen. Lo que llega
+  en la v3 **no es su CRUD** —ese es este— sino la sesión y el permiso.
 - La BD **no se modifica**: ni columnas nuevas, ni índices, ni datos
   semilla distintos. Si algo parece faltar, es de otra versión.
 - El reset completo es de Docker, no de SQL:

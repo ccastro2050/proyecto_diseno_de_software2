@@ -1,4 +1,4 @@
-# Investigación y decisiones — Versión 1: producto + PostgreSQL (C#/ASP.NET Core)
+# Investigación y decisiones — Versión 1: las seis tablas sin clave foránea
 
 > **Versión 1** · **Lectura opcional** (el porqué de las decisiones del plan,
 > con las alternativas que se evaluaron y descartaron). Complementa a
@@ -130,26 +130,7 @@ estudiante).
 **Decisión:** `docker-compose.yml` con `postgres` + `api-facturas` desde
 v1 — `docker compose up -d --build` deja todo funcionando.
 **Por qué:** el Artículo 4 de la constitución ("un solo comando") es
-permanente — y la constitución gana. El compose de v1 **crece por
-versiones** (más adelante los otros motores y el front
-Flask con Jinja2): la infraestructura también se construye por
-incrementos.
-
-## D9 — Los planos viven en los .md, como Mermaid (y no como imágenes)
-
-**Alternativas:** (a) diagramas en una herramienta aparte (draw.io,
-Visio) exportados a PNG · (b) diagramas **Mermaid** embebidos en los
-mismos `.md` del spec kit.
-**Decisión: (b).** Tres razones de diseño de software:
-1. **Se versionan como código:** un cambio de arquitectura produce un
-   diff legible en git, igual que la spec (un PNG solo produce "binario
-   cambió").
-2. **La IA los LEE:** cuando el spec kit se le entrega a una IA para
-   construir la versión, un PNG es invisible — un bloque Mermaid es
-   texto y ES parte del prompt: la secuencia del 404 le dice a la IA
-   exactamente quién lanza la excepción y quién la traduce.
-3. **GitHub los dibuja:** el mismo archivo es documento técnico
-   (renderizado) y contrato de diseño (texto), sin herramientas extra.
-El costo asumido: Mermaid es menos expresivo que UML completo — para
-este curso, el subconjunto (contexto, despliegue, clases, secuencia, ER,
-flujo) alcanza y sobra.
+permanente — y la constitución gana. El compose de v1 ya trae **sus tres
+servicios** —la base, la API y la interfaz gráfica— y **crece por versiones**: la
+infraestructura también se construye por incrementos, pero ninguna versión
+nace sin su front.

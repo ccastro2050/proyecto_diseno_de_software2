@@ -1,4 +1,4 @@
-# Tareas — Versión 1: api_facturas con producto + PostgreSQL (C#/ASP.NET Core)
+# Tareas — Versión 1: las seis tablas sin FK, con su interfaz gráfica
 
 > **Versión 1** · El orden de construcción, partiendo de CERO. Cada fase
 > termina en algo **verificable**. Requisitos: [2_spec.md](2_spec.md) ·
@@ -7,41 +7,26 @@
 
 ---
 
-**El orden de construcción, dibujado** — cada flecha lleva su compuerta
-de verificación (no se cruza en rojo). Note la dirección: de los datos
-hacia el HTTP, y el servicio se prueba ANTES de tener controller:
-
-```mermaid
-flowchart TB
-    F0["Fase 0 · BD y esqueleto"] -->|"psql ve 12 tablas, producto = 8"| F1["Fase 1 · Proyecto .NET + modelo Producto"]
-    F1 -->|"dotnet build compila"| F2["Fase 2 · Peticiones por verbo + excepción"]
-    F2 -->|"compila"| F3["Fase 3 · Interfaces + repositorio PostgreSQL"]
-    F3 -->|"compila"| F4["Fase 4 · Servicio + prueba de capas"]
-    F4 -->|"CRITERIO 6 OK (sin BD)"| F5["Fase 5 · Controller + Program.cs"]
-    F5 -->|"smoke test §2 del quickstart"| F6["Fase 6 · Docker: un solo comando"]
-    F6 -->|"up -d --build deja TODO andando"| F7["Fase 7 · Cierre: commit + tag v1"]
-```
-
 ## Fase 0 — Base de datos y esqueleto
 - [ ] Copiar a `db/` el archivo **provisto** con esta versión:
       `bdfacturas_postgres.sql` (la BD completa en dialecto PostgreSQL —
       no se escribe ni se genera con IA; ver [3_plan.md](3_plan.md) §4.6).
 - [ ] Crear el `docker-compose.yml` con el servicio `postgres` (imagen
-      16-alpine, volumen `pgdata`, puerto 15453, healthcheck con
+      16-alpine, volumen `pgdata`, puerto 15452, healthcheck con
       pg_isready, y el script montado en `/docker-entrypoint-initdb.d/`)
       — ver [3_plan.md](3_plan.md) §5. Levantar: `docker compose up -d`.
 - [ ] Crear `api_facturas/` con subcarpetas `Modelos/`, `Peticiones/`, `Controllers/`,
       `Servicios/`, `Repositorios/`, `Excepciones/` y `pruebas/`.
 
 **Verificar:** `docker compose ps` muestra `postgres (healthy)`; un
-cliente SQL a `localhost:15453` (usuario `postgres`) ve las **12 tablas**
+cliente SQL a `localhost:15452` (usuario `postgres`) ve las **12 tablas**
 y `SELECT count(*) FROM producto` da **8**.
 
 ## Fase 1 — El proyecto .NET y el modelo Producto (la clase entidad)
 - [ ] `ApiFacturas.csproj`: proyecto Web de .NET 10, paquete
       `Npgsql`, y la exclusión de `pruebas/**`.
 - [ ] `appsettings.json` con la cadena de conexión (default
-      `localhost:15453` para correr sin Docker).
+      `localhost:15452` para correr sin Docker).
 - [ ] `Modelos/Producto.cs`: la clase entidad con las 4 propiedades
       tipadas `{ get; set; }` (`Codigo` string, `Nombre` string, `Stock`
       int, `Valorunitario` decimal). En C#, las propiedades SON los
@@ -63,11 +48,10 @@ y `SELECT count(*) FROM producto` da **8**.
 - [ ] `Repositorios/IRepositorioProducto.cs`: interface con los 5 métodos
       async ([3_plan.md](3_plan.md) §4.1).
 - [ ] `Servicios/IServicioProducto.cs`: interface del servicio.
-- [ ] `Repositorios/RepositorioProductoPostgres.cs`: Dapper con los SQL
-      de [3_plan.md](3_plan.md) §4.4 — `QueryAsync<Producto>` para
-      lecturas y `ExecuteAsync` para escrituras, `LIMIT @limite`,
-      parámetros `@`, y el UPDATE con SET dinámico de lista blanca
-      (`DynamicParameters` sobre el diccionario).
+- [ ] `Repositorios/RepositorioProductoPostgres.cs`: Dapper (`QueryAsync`/`ExecuteAsync`) con los SQL
+      de [3_plan.md](3_plan.md) §4.4 — `LIMIT @limite`, parámetros `@`,
+      conexión por operación con `await using`, y el UPDATE con SET
+      dinámico de lista blanca.
 
 **Verificar:** `dotnet build` compila sin errores.
 
@@ -99,11 +83,53 @@ y `SELECT count(*) FROM producto` da **8**.
 con `errores[]`), y el contraste PUT vs PATCH con `{"stock": 99}` (422 vs
 200).
 
-## Fase 6 — Docker: un solo comando
+## Fase 6 — LA INTERFAZ GRÁFICA (la otra mitad de la versión)
+
+El front en **Flask 3 / Python 3.12**, en `front_flask/`, en su propio
+contenedor y en el puerto **8067**.
+
+| Qué se escribe | Dónde |
+|---|---|
+| El `.csproj` **sin un solo paquete de datos** | `requirements.txt` |
+| La clase `Producto` **del front** | `Modelos/Producto.cs` |
+| El registro de recursos | `entidades.py` |
+| `cliente_api`: el único sitio que sabe de HTTP | `cliente_api.py` |
+| El armazón y el menú | `templates/base.html` |
+| Las vistas del recurso, genéricas | `rutas_entidades.py` · `templates/entidades/` |
+| Bootstrap **servido desde el repositorio** | `static/lib/bootstrap/` |
+| El CSS del proyecto, **encima** de Bootstrap | `static/marca.css` |
+
+**Tres cosas que se van a querer hacer y no se deben:**
+
+| | Por qué no |
+|---|---|
+| **Compartir la clase `Producto`** con una referencia de proyecto | Están las dos en C#, así que *funcionaría*. Ata los dos procesos: un cambio interno de la API rompería el front sin que nadie tocara el contrato |
+| **Servir las páginas desde la misma API** | Son dos procesos, y eso hay que poder demostrarlo apagando uno |
+| **Meter Bootstrap por CDN** | Bootstrap si, el CDN no: se copia a `static/lib/`. Un front que necesita internet para verse bien no arranca en un salón sin red |
+
+**Verificación:** `http://localhost:8067/productos` lista los 8 productos, se
+crea uno desde la interfaz gráfica, y **los dos botones de guardar** hacen cosas
+distintas (criterios 7 a 9 de [2_spec.md](2_spec.md)).
+
+## Fase 7 — La prueba que separa los dos procesos
+
+```powershell
+docker compose stop api-facturas
+```
+
+Recargue `http://localhost:8067/productos`.
+
+**Verificación:** el menú sigue, hay un aviso de que no se pudo conectar, y
+**no hay ni una fila**. Es el criterio 10, y es el único que no se puede
+simular: o los dos procesos están separados, o no.
+
+Después, `docker compose start api-facturas` y la interfaz gráfica vuelve a listar.
+
+## Fase 8 — Docker: un solo comando
 - [ ] `api_facturas/Dockerfile`: imagen `dotnet/sdk:10.0`, `dotnet watch`,
-      `ASPNETCORE_URLS` en 8053, `DOTNET_USE_POLLING_FILE_WATCHER`.
+      `ASPNETCORE_URLS` en 8052, `DOTNET_USE_POLLING_FILE_WATCHER`.
 - [ ] Agregar al `docker-compose.yml` el servicio `api-facturas`: `build:`,
-      código montado + `bin/` y `obj/` en volúmenes anónimos, puerto 8053,
+      código montado + `bin/` y `obj/` en volúmenes anónimos, puerto 8052,
       variable `ConnectionStrings__Postgres` con el host interno
       `postgres:5432`, y `depends_on` de `postgres` con
       `condition: service_healthy`.
@@ -112,7 +138,7 @@ con `errores[]`), y el contraste PUT vs PATCH con `{"stock": 99}` (422 vs
 — UN comando deja BD y API funcionando (criterio 1); editar un `.cs`,
 guardar, y verificar que recompila y reinicia solo.
 
-## Fase 7 — Cierre de la versión
+## Fase 9 — Cierre de la versión
 - [ ] Correr el smoke test completo de [7_quickstart.md](7_quickstart.md)
       §2 — equivale a los 6 criterios de aceptación de
       [2_spec.md](2_spec.md) §5.

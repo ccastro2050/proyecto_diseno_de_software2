@@ -46,6 +46,7 @@
         <div class="navbar-nav flex-wrap">
             <a class="nav-link" href="{{ url_for('inicio') }}">Inicio</a>
         <a class="nav-link" href="{{ url_for('facturas.lista') }}"><strong>Facturas</strong></a>
+        <a class="nav-link" href="{{ url_for('usuarios_roles.lista') }}">Usuarios y roles</a>
             {% for clave, e in menu_entidades.items() %}
             <a class="nav-link" href="{{ url_for('entidades.lista', clave=clave) }}">{{ e.titulo }}</a>
             {% endfor %}
