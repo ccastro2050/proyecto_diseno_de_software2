@@ -30,6 +30,15 @@ app.register_blueprint(bp_usuarios_roles)
 app.register_blueprint(bp_facturas)
 
 
+# Las tarjetas del inicio que NO salen del registro, porque no son
+# un CRUD de campos: la factura se emite y se anula, el usuario con sus
+# roles viaja con casillas, y el tablero no tiene tabla.
+TARJETAS_SUELTAS = [
+    ("/facturas", "Facturas", 2, "Maestro-detalle: la factura y sus renglones, en un solo envío"),
+    ("/usuarios-con-roles", "Usuarios y roles", 2, "El usuario y sus roles, con casillas"),
+]
+
+
 @app.context_processor
 def menu():
     """El menu, con TODAS las entidades de esta version.
@@ -37,7 +46,7 @@ def menu():
     En la v3 este mismo metodo filtrara por permiso. Hoy no hay a quien
     preguntarle: no hay sesion.
     """
-    return {"menu_entidades": ENTIDADES, "hay_sesion": False}
+    return {"menu_entidades": ENTIDADES, "hay_sesion": False, "tarjetas_sueltas": TARJETAS_SUELTAS}
 
 
 @app.route("/")
